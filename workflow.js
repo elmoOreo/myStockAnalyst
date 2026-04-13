@@ -21,8 +21,7 @@ workflow.addEdge("sectorAgent", "regulatoryBodyAgent");
 workflow.addEdge("regulatoryBodyAgent", "regulationAgent");
 
 // The analyst agent needs data from both the researcher and regulation agents
-workflow.addEdge("researcher", "analyst");
-workflow.addEdge("regulationAgent", "analyst");
+workflow.addEdge(["researcher", "regulationAgent"], "analyst");
 
 workflow.addEdge("analyst", END);
 
