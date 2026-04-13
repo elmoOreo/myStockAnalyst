@@ -26,6 +26,7 @@ export const GraphState = {
         sectorData: null,
         regulatoryBodiesData: null,
         logFilePath: null, // Added to carry the log file path
+        threadId: null, // Added to carry the unique run ID
         finalReport: {
             // Appends new reports to the list instead of overwriting
             value: (x, y) => (y ? x.concat(y) : x),

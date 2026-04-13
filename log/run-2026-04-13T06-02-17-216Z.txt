@@ -1,0 +1,4 @@
+--- Log started at 2026-04-13T06:02:17.216Z ---
+
+[2026-04-13T06:02:17.221Z] [Main] Application started.
+[2026-04-13T06:02:17.221Z] [Main] Analyzing portfolio: RELIANCE, TCS, NAZARA

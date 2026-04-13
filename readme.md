@@ -16,6 +16,7 @@ This project was born out of "Agent Fatigue" and a desire for high-signal, low-n
 * **LLM:** Ollama (Running Gemma 4)
 * **Search Engine:** [Tavily AI](https://tavily.com/) (Finance-optimized RAG)
 * **Validation:** Zod (Strict schema enforcement for LLM outputs)
+* **Database:** **MongoDB** (Localhost:27017) – Serves as the persistence layer for intermediate agent reasoning and final sentiment reports.
 
 ---
 
@@ -25,6 +26,11 @@ The system currently orchestrates two specialized sub-agents:
 * **The Regulatory Scout:** Maps stocks to sectoral regulators (MeitY, SEBI, GST Council) to identify upcoming policy shifts (e.g., Gaming bans, Tax changes) before they impact the ticker.
 
 ---
+
+## 💾 Data Persistence
+To move from transient scripts to a stateful engine, the system now persists data to MongoDB. This ensures:
+* **Intermediate Results:** Raw findings from the Sentinel and Scout are stored before synthesis, allowing for auditability.
+* **Final Reports:** Historically tracked to monitor how sentiment scores for tickers like **NAZARA** or **RELIANCE** evolve over time.
 
 ## 📂 Project Structure
 ```text
@@ -47,6 +53,7 @@ The system currently orchestrates two specialized sub-agents:
   ollama pull gemma4
   ```
 * Obtain a [Tavily API Key](https://tavily.com/) (Free tier available).
+* **MongoDB:** A local instance running on `localhost:27017`.
 
 ### 2. Installation
 ```bash
@@ -60,6 +67,7 @@ Create a `.env` file in the root directory:
 ```env
 TAVILY_API_KEY=your_key_here
 OLLAMA_BASE_URL=http://localhost:11434
+MONGODB_URI=mongodb://localhost:27017/myStockAnalyst
 ```
 
 ### 4. Run the Analyst

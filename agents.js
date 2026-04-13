@@ -2,6 +2,7 @@ import { fetchStockNews, fetchRegulatoryNews } from './tools.js';
 import { llm } from './config.js';
 import { SentimentSchema, SectorSchema, RegulatoryBodySchema } from './schemas.js';
 import { logMessage } from './logger.js';
+import { logAgentRun } from './db.js';
 
 export const researcherAgent = async (state) => {
     await logMessage(state.logFilePath, "Researcher", `Starting for tickers: ${state.tickers.join(", ")}`);
@@ -12,6 +13,7 @@ export const researcherAgent = async (state) => {
         // Calling our independent function directly
         const news = await fetchStockNews(ticker);
         await logMessage(state.logFilePath, "Researcher", `Fetched news for ${ticker}: ${news.substring(0, 100)}...`);
+        await logAgentRun(state.threadId, "researcherAgent", { ticker }, { news: news.substring(0, 500) + '...' });
         results.push({ ticker, content: news });
     }
     
@@ -36,11 +38,13 @@ export const sectorAgent = async (state) => {
                 const parsed = JSON.parse(jsonMatch[0]);
                 const validated = SectorSchema.parse(parsed);
                 await logMessage(state.logFilePath, "SectorAgent", `Identified sector for ${validated.ticker}: ${validated.sector}`);
+                await logAgentRun(state.threadId, "sectorAgent", { ticker, prompt }, validated);
                 results.push(validated);
             }
         } catch (e) {
             console.error(`Sector identification failed for ${ticker}:`, e.message);
             await logMessage(state.logFilePath, "SectorAgent", `Sector identification failed for ${ticker}: ${e.message}`);
+            await logAgentRun(state.threadId, "sectorAgent", { ticker, prompt }, { error: e.message, response: res.content });
         }
     }
 
@@ -69,11 +73,13 @@ export const regulatoryBodyAgent = async (state) => {
                 const parsed = JSON.parse(jsonMatch[0]);
                 const validated = RegulatoryBodySchema.parse(parsed);
                 await logMessage(state.logFilePath, "RegulatoryBodyAgent", `Identified bodies for ${validated.ticker} (${validated.sector}): ${validated.regulatory_bodies.join(', ')}`);
+                await logAgentRun(state.threadId, "regulatoryBodyAgent", { ticker, sector, prompt }, validated);
                 results.push(validated);
             }
         } catch (e) {
             console.error(`Regulatory body identification failed for ${ticker}:`, e.message);
             await logMessage(state.logFilePath, "RegulatoryBodyAgent", `Regulatory body identification failed for ${ticker}: ${e.message}`);
+            await logAgentRun(state.threadId, "regulatoryBodyAgent", { ticker, sector, prompt }, { error: e.message, response: res.content });
         }
     }
 
@@ -92,6 +98,7 @@ export const regulationAgent = async (state) => {
         // Calling our independent function directly
         const news = await fetchRegulatoryNews(ticker, sector, regulatory_bodies);
         await logMessage(state.logFilePath, "RegulationAgent", `Fetched regulatory news for ${ticker} (Sector: ${sector}) using bodies: ${regulatory_bodies.join(', ')}: ${news.substring(0, 100)}...`);
+        await logAgentRun(state.threadId, "regulationAgent", { ticker, sector, regulatory_bodies }, { news: news.substring(0, 500) + '...' });
         results.push({ ticker, content: news });
     }
     
@@ -149,6 +156,7 @@ export const analystAgent = async (state) => {
                 const validated = SentimentSchema.parse(parsed);
                 
                 await logMessage(state.logFilePath, "Analyst", `Validated sentiment for ${validated.ticker}: ${validated.sentiment}`);
+                await logAgentRun(state.threadId, "analystAgent", { ticker: item.ticker, prompt }, validated);
                 reports.push(validated);
             }
         } catch (e) {
@@ -156,6 +164,7 @@ export const analystAgent = async (state) => {
             // Zod throws an error and we catch it here.
             console.error(`Validation failed for ${item.ticker}:`, e.message);
             await logMessage(state.logFilePath, "Analyst", `Validation failed for ${item.ticker}: ${e.message}`);
+            await logAgentRun(state.threadId, "analystAgent", { ticker: item.ticker, prompt }, { error: e.message, response: res.content });
         }
     }
     await logMessage(state.logFilePath, "Analyst", `Intermediate sentiment reports generated:\n${JSON.stringify(reports, null, 2)}`);
